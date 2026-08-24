@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏓</text></svg>" />
+  <title>FacePong</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Game canvas fills the viewport behind everything. -->
+  <canvas id="game"></canvas>
+
+  <!-- Bottom control zone (overlay) -->
+  <div id="controls" class="hidden">
+    <div id="slider" class="zone"></div>
+    <div id="shoot-btn" class="zone">
+      <div id="shoot-icon"></div>
+      <div id="shoot-ring"></div>
+    </div>
+  </div>
+
+  <!-- HUD (scores + countdown) -->
+  <div id="hud" class="hidden">
+    <div id="score-top" class="score"></div>
+    <div id="score-bottom" class="score"></div>
+    <div id="countdown"></div>
+  </div>
+
+  <!-- Toasts (effects / score) -->
+  <div id="toast" class="hidden"></div>
+
+  <!-- Screens (DOM overlays) -->
+  <div id="screen-start" class="screen">
+    <h1 class="title">Face<span>Pong</span></h1>
+    <p class="tagline">Your face is the paddle.</p>
+    <input id="name" type="text" maxlength="20" placeholder="Your name" autocomplete="off" />
+    <div id="avatar-box" class="avatar-box">
+      <img id="avatar-preview" alt="Your face" />
+      <span id="avatar-placeholder">Add your face</span>
+    </div>
+    <button id="btn-photo" class="btn">Take / choose photo</button>
+    <button id="btn-solo" class="btn btn-primary">Solo practice</button>
+    <div class="row">
+      <input id="room" type="text" maxlength="8" placeholder="Room code (optional)" autocomplete="off" />
+      <button id="btn-find" class="btn btn-primary">Find match</button>
+    </div>
+  </div>
+
+  <div id="screen-queue" class="screen hidden">
+    <h2>Waiting for opponent…</h2>
+    <p>Share this code:</p>
+    <div id="queue-code" class="code"></div>
+    <p id="queue-url" class="url"></p>
+    <button id="btn-cancel" class="btn">Cancel</button>
+  </div>
+
+  <div id="screen-result" class="screen hidden">
+    <h2 id="result-title">You win!</h2>
+    <div id="result-score" class="code"></div>
+    <button id="btn-again" class="btn btn-primary">Play again</button>
+    <button id="btn-solo-again" class="btn">Solo practice</button>
+  </div>
+
+  <!-- Crop overlay -->
+  <div id="crop-overlay" class="hidden">
+    <div id="crop-stage">
+      <img id="crop-img" alt="" />
+      <div id="crop-mask"></div>
+    </div>
+    <div class="crop-controls">
+      <button id="crop-cancel" class="btn">Cancel</button>
+      <button id="crop-use" class="btn btn-primary">Use this</button>
+    </div>
+    <input id="file-input" type="file" accept="image/*" capture="user" hidden />
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

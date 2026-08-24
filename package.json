@@ -1,0 +1,12 @@
+{
+  "name": "facepong",
+  "version": "1.0.0",
+  "description": "FacePong — a funny pong game where your face is the paddle",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
