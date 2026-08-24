@@ -7,6 +7,11 @@ import { initCrop, requestPhoto, getAvatar } from './crop.js';
 import { showScreen, setAvatarPreview, setQueueInfo, showToast, setResult } from './screens.js';
 import { createNet } from './net.js';
 import { createBot } from './bot.js';
+import {
+  initAudio, setMuted, isMuted,
+  playPaddleHit, playWallHit, playShoot, playEffect, playScore,
+  playCountdownTick, playGo, playWin, playLose,
+} from './audio.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -28,10 +33,12 @@ const net = createNet({
     avatars = [avatarImage(msg.players[0].avatar), avatarImage(msg.players[1].avatar)];
     state = createInitialState();
     lastSnapshot = null;
+    resetEventWatch();
     showScreen('game');
   },
   onSnapshot(msg) { lastSnapshot = msg; },
   onEffect(msg) {
+    playEffect(msg.effect);
     if (msg.target === myIdx) {
       const names = { ice: 'Frozen! ❄️', oil: 'Slippery oil! 🛢️', dwarf: 'Shrunk! 🐜' };
       showToast(names[msg.effect] || msg.effect);
@@ -41,10 +48,12 @@ const net = createNet({
     }
   },
   onScore(msg) {
+    playScore(msg.scorer === myIdx);
     showToast(msg.scorer === myIdx ? 'Point! 🎯' : 'They scored 😬');
   },
   onGameover(msg) {
     mode = 'idle';
+    if (msg.winner === myIdx) playWin(); else playLose();
     setResult(msg.winner === myIdx, msg.scores);
     showScreen('result');
   },
@@ -76,6 +85,7 @@ const input = setupInput({
     } else if (mode === 'net') {
       net.shoot();
     }
+    playShoot();
   },
 });
 
@@ -106,18 +116,23 @@ function soloFrame(now) {
 }
 
 function handleSoloEvent(ev) {
-  if (ev.type === 'score') showToast(ev.scorer === 0 ? 'Point! 🎯' : 'Bot scored 😬');
-  else if (ev.type === 'effect') {
+  if (ev.type === 'score') {
+    playScore(ev.scorer === 0);
+    showToast(ev.scorer === 0 ? 'Point! 🎯' : 'Bot scored 😬');
+  } else if (ev.type === 'effect') {
+    playEffect(ev.effect);
     const names = { ice: 'Frozen! ❄️', oil: 'Slippery oil! 🛢️', dwarf: 'Shrunk! 🐜' };
     showToast(ev.target === 0 ? names[ev.effect] : 'You ' + ev.effect + 'ed the bot!');
   } else if (ev.type === 'gameover') {
     soloRunning = false;
+    if (ev.winner === 0) playWin(); else playLose();
     setResult(ev.winner === 0, ev.scores);
     showScreen('result');
   }
 }
 
 function startSolo() {
+  initAudio();
   mode = 'solo';
   myIdx = 0;
   state = createInitialState();
@@ -126,12 +141,14 @@ function startSolo() {
   soloAccum = 0;
   soloLast = performance.now();
   soloRunning = true;
+  resetEventWatch();
   showScreen('game');
   requestAnimationFrame(soloFrame);
 }
 
 // ---- Networked mode ----
 function startNet(room) {
+  initAudio();
   mode = 'net';
   currentRoom = room || null;
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -147,8 +164,43 @@ function draw() {
   const cssH = window.innerHeight;
   let s = state;
   if (mode === 'net' && lastSnapshot) s = lastSnapshot.state;
+  watchGameEvents(s);
   render(ctx, canvas, s, { myIdx, avatars, cssW, cssH });
   updateShootButton(s);
+}
+
+// Detect bounces, countdown ticks, and the "go" transition by watching ball
+// velocity and phase changes between frames. Works identically for solo (local
+// engine) and net (server snapshots) modes.
+let prevBall = null;
+let prevCd = -1;
+let prevPhase = null;
+
+function resetEventWatch() {
+  prevBall = null;
+  prevCd = -1;
+  prevPhase = null;
+}
+
+function watchGameEvents(s) {
+  if (mode !== 'solo' && mode !== 'net') return;
+  const b = s.ball;
+  if (prevBall && b) {
+    // A paddle hit flips the vertical direction; a wall hit flips the horizontal.
+    if (b.vy !== 0 && prevBall.vy !== 0 && Math.sign(b.vy) !== Math.sign(prevBall.vy)) {
+      playPaddleHit();
+    } else if (b.vx !== 0 && prevBall.vx !== 0 && Math.sign(b.vx) !== Math.sign(prevBall.vx)) {
+      playWallHit();
+    }
+  }
+  if (b) prevBall = { vx: b.vx, vy: b.vy };
+
+  const cd = s.phase === 'countdown' ? Math.ceil(s.countdown) : 0;
+  if (cd > 0 && cd !== prevCd) playCountdownTick();
+  prevCd = cd;
+
+  if (s.phase === 'playing' && prevPhase === 'countdown') playGo();
+  prevPhase = s.phase;
 }
 
 const ITEM_ICONS = { ice: '❄️', oil: '🛢️', dwarf: '🐜' };
@@ -205,6 +257,14 @@ function init() {
   });
 
   document.getElementById('btn-solo-again').addEventListener('click', startSolo);
+
+  const muteBtn = document.getElementById('btn-mute');
+  muteBtn.addEventListener('click', () => {
+    const nowMuted = !isMuted();
+    setMuted(nowMuted);
+    muteBtn.textContent = nowMuted ? '🔇' : '🔊';
+    muteBtn.title = nowMuted ? 'Activar sonido' : 'Silenciar';
+  });
 
   // Pause solo sim when the tab is backgrounded (rAF stops anyway; clamp on return).
   document.addEventListener('visibilitychange', () => {

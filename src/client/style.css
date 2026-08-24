@@ -35,6 +35,24 @@ html, body {
 
 .hidden { display: none !important; }
 
+/* ---- Mute button ---- */
+.mute-btn {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: 12px;
+  z-index: 60;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #2b3457;
+  background: rgba(16, 22, 43, 0.85);
+  color: var(--text);
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.mute-btn:active { transform: scale(0.94); }
+
 /* ---- Screens ---- */
 .screen {
   position: absolute;

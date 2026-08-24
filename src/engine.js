@@ -9,6 +9,7 @@ import {
   BALL_SPEED,
   BALL_SPEEDUP,
   BALL_SPEED_MAX,
+  BALL_MIN_COMPONENT,
   PADDLE_WIDTH,
   PADDLE_Y,
   PADDLE_SPEED,
@@ -69,18 +70,31 @@ function randomItem() {
   return ITEM_TYPES[Math.floor(Math.random() * ITEM_TYPES.length)];
 }
 
+// Keep the ball on a healthy diagonal so it always advances: neither velocity
+// component may fall below a fraction of the ball's speed. This prevents both a
+// near-vertical "ping-pong" loop and a near-horizontal skim that stalls play.
+// Clamp |vx| into the valid band and derive |vy| from the magnitude constraint,
+// so the result always satisfies |vx|,|vy| >= BALL_MIN_COMPONENT * speed.
+function enforceBallAngle(b, speed) {
+  const min = speed * BALL_MIN_COMPONENT;
+  const max = Math.sqrt(speed * speed - min * min);
+  const vxSign = b.vx < 0 ? -1 : 1;
+  const vySign = b.vy < 0 ? -1 : 1;
+  const ax = Math.min(Math.max(Math.abs(b.vx), min), max);
+  b.vx = vxSign * ax;
+  b.vy = vySign * Math.sqrt(speed * speed - ax * ax);
+}
+
 function launchBall(state) {
   const b = state.ball;
   b.x = 0.5;
   b.y = FIELD_ASPECT / 2;
-  // Random horizontal-ish direction toward a random player; never near-vertical.
+  // Random direction toward a random player, then clamp to a healthy diagonal.
   const angle = (Math.random() < 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * (Math.PI / 2);
-  const dir = Math.random() < 0.5 ? -1 : 1; // -1 = toward player 0 (down), 1 = toward player 1 (up)
-  const vx = Math.sin(angle) * BALL_SPEED;
-  const vy = Math.cos(angle) * BALL_SPEED * dir;
-  const mag = Math.hypot(vx, vy);
-  b.vx = (vx / mag) * BALL_SPEED;
-  b.vy = (vy / mag) * BALL_SPEED;
+  const dir = Math.random() < 0.5 ? -1 : 1; // -1 = toward player 0 (bottom), 1 = toward player 1 (top)
+  b.vx = Math.sin(angle) * BALL_SPEED;
+  b.vy = Math.cos(angle) * BALL_SPEED * dir;
+  enforceBallAngle(b, BALL_SPEED);
 }
 
 // Advance the simulation by dt seconds. Mutates `state` and returns discrete events
@@ -216,13 +230,9 @@ function stepBall(state, events, dt) {
       const dot = b.vx * nx + b.vy * ny;
       b.vx -= 2 * dot * nx;
       b.vy -= 2 * dot * ny;
-      // Slight speed-up per hit, capped.
+      // Slight speed-up per hit, capped; clamp the angle so the ball keeps advancing.
       const speed = Math.min(Math.hypot(b.vx, b.vy) + BALL_SPEEDUP, BALL_SPEED_MAX);
-      const mag = Math.hypot(b.vx, b.vy);
-      if (mag > 0) {
-        b.vx = (b.vx / mag) * speed;
-        b.vy = (b.vy / mag) * speed;
-      }
+      enforceBallAngle(b, speed);
     }
   });
 
