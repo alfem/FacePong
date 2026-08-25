@@ -150,29 +150,33 @@ html, body {
 #controls {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 28vh;
+  height: 30vh;
   z-index: 20;
   display: flex;
+  flex-direction: column;
 }
 .zone { touch-action: none; }
-#slider { flex: 1 1 72%; }
+#slider { flex: 1 1 auto; width: 100%; }
 #shoot-btn {
-  flex: 0 0 28%;
+  flex: 0 0 88px;
+  width: 88px;
+  align-self: flex-end;
+  margin: 4px 14px 0 0;
   position: relative;
-  border-left: 1px solid rgba(255,255,255,0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0,0,0,0.15);
 }
 #shoot-btn::before {
   content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
   width: 74px; height: 74px;
   border-radius: 50%;
   border: 3px solid var(--ring);
-  position: absolute;
 }
 #shoot-icon {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
   width: 64px; height: 64px;
   border-radius: 50%;
   background: #10162b center/cover no-repeat;
@@ -181,6 +185,8 @@ html, body {
 }
 #shoot-ring {
   position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
   width: 74px; height: 74px;
   border-radius: 50%;
   border: 3px solid var(--accent2);

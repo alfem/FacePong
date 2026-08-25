@@ -4,9 +4,9 @@
 export const FIELD_ASPECT = 16 / 9; // logical playfield height = width * aspect (portrait)
 
 export const BALL_R = 0.018; // ball radius, in units of playfield width
-export const BALL_SPEED = 0.9; // initial ball speed (units/s)
-export const BALL_SPEEDUP = 0.05; // speed gained per paddle hit
-export const BALL_SPEED_MAX = 1.7; // speed cap
+export const BALL_SPEED = 0.81; // initial ball speed (units/s)
+export const BALL_SPEEDUP = 0.045; // speed gained per paddle hit
+export const BALL_SPEED_MAX = 1.53; // speed cap
 export const BALL_MIN_COMPONENT = 0.35; // min |vx|/speed and |vy|/speed, keeps the ball diagonal
 
 export const PADDLE_WIDTH = 0.22; // paddle (circular face) diameter, in units of width
